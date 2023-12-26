@@ -1,7 +1,7 @@
 # Реалізація інформаційного та програмного забезпечення
 
 В рамках проекту розробляється:
-- ~~SQL-скрипт для створення на початкового наповнення бази даних~~
+- SQL-скрипт для створення на початкового наповнення бази даних
 - RESTfull сервіс для управління даними
 
 ## SQL-Скрипт для створення початкового наповнення бази даних
@@ -360,5 +360,200 @@ Insert into mydb.category (name, description, Post_id, Category_id) Values
 ```
 
 
-## RESTfull Сервіс для управління даними
-*У розробці...*
+
+## cat_controllers.js
+```js
+'use strict';
+
+const mysqlActions = require("./mysql");
+
+const controllers = {
+    getAll: async (req, res) => {
+        const data = await mysqlActions.getAll();
+        res.status(200).send(data);
+    },
+    getById: async (req, res) => {
+        const id = req.params.id;
+        const data = await mysqlActions.getById(id);
+        if(!data) {
+            return res.status(200).send({
+                message:'Not found'
+            });
+        }
+        if(data.error) {
+            return res.status(500).send({
+                message:'Database error'
+            })
+        }
+        res.status(200).send(data);
+    },
+    create: async(req, res) => {
+        const {
+            name, desc, catid, postid
+        } = req.body;
+        const data = await mysqlActions.create(name, desc, catid, postid);
+        if(data && data.error) {
+            return res.status(500).send({
+                message:'Database error'
+            })
+        }
+        res.status(201).send(data);
+    },
+    update: async(req, res) => {
+        const {
+            name, desc
+        } = req.body;
+        const { id } = req.params;
+        const data = await mysqlActions.update(name, desc, id);
+        if(data && data.error) {
+            return res.status(500).send({
+                message:'Database error'
+            })
+        }
+        res.status(200).send(data);
+    },
+    delete: async(req, res) => {
+        const {
+            id
+        } = req.params;
+        const data = await mysqlActions.delete(id);
+        if(data && data.error) {
+            return res.status(500).send({
+                message:'Database error'
+            })
+        }
+        res.status(200).send(data);
+    }
+};
+
+module.exports = controllers;
+```
+## index.js
+```js
+'use strict';
+
+const express = require('express');
+const router = require('./router');
+const server = express();
+
+const PORT = process.env.PORT || 5000;
+
+server.use(express.json());
+server.use(router);
+
+server.listen(PORT , () => {
+  console.log('Server started on port: http://localhost:' + PORT);
+} );
+```
+
+## mysql.js
+```js
+'use strict';
+
+const mysql = require('mysql2/promise');
+
+const info = {
+    user:       'root',
+    password:   'password1234qwas4',
+    database:   'mydb',
+    host:       'localhost'
+};
+
+const pool = mysql.createPool(info);
+
+const mysqlActions = {
+    getAll: async () =>{
+        try{
+            const [response] = await  pool.execute('SELECT * FROM mydb.Category');
+            return response;
+        } catch(err){
+            console.log(err);
+            return {
+                error:true
+            };
+        };
+    },
+    getById: async(id) =>{
+        try{
+            const [response] = await  pool.execute('SELECT * FROM mydb.Category Where id = ?', [id]);
+                return response[0];
+        } catch(err) {
+            console.log(err);
+            return {
+                error:true
+            };
+        };
+    },
+    create: async (name, desc, catid, postid) =>{
+        try{
+            const [response] = await pool.execute(`
+                Insert into mydb.Category
+                (name, description, Post_id, Category_id)
+                values ("${name}", "${desc}", ${postid}, ${catid})`
+            );
+            return response[0];
+        } catch(err) {
+            console.log(err);
+            return {
+                error:true
+            };
+        };
+    },
+    update: async (name, description, id) =>{
+        try{
+            const nameStr = name ? `name='${name}'` : ' ';
+            const descStr = description ? `description='${description}'` : ' ';
+            const isOpts = (name && description) ? ', ' : ' ';
+            const sqlStr = nameStr + isOpts + descStr;
+            const [response] = await pool.execute(`
+                UPDATE mydb.Category
+                SET ${sqlStr}
+                WHERE id = ${id};
+            `);
+            return response;
+        } catch(err) {
+            console.log(err);
+            return {
+                error:true
+            };
+        };
+    },
+    delete: async (id) =>{
+        try{
+            const [response] = await pool.execute(`
+                DELETE FROM mydb.Category
+                WHERE id = ${id};
+            `);
+            return response;
+        } catch(err) {
+            console.log(err);
+            return {
+                error:true
+            };
+        };
+    }
+};
+
+module.exports =  mysqlActions;
+```
+## router.js
+```js
+'use strict';
+
+const express = require('express');
+const controllers = require('./cat_controllers');
+
+const router = express.Router();
+
+router.get('/category',         controllers.getAll);
+router.get('/category/:id',     controllers.getById);
+
+router.post('/category',        controllers.create);
+
+router.put('/category/:id',     controllers.update);
+
+router.delete('/category/:id',  controllers.delete);
+
+
+module.exports = router;
+```

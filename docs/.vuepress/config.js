@@ -15,7 +15,7 @@ module.exports = {
     }]
   ],
   port: 3030,
-  base: '/edu_db_labs-IM-21/',
+  base: '/edu_db_coursework-IM-21-NazarDidora/',
   theme: 'cool',
   // dest: 'dist',
   head: [
@@ -76,7 +76,7 @@ module.exports = {
 
     lastUpdated: false, // string | boolean
       // Assumes GitHub. Can also be a full GitLab url.
-    repo: 'https://github.com/Dmutre/edu_db_labs-IM-21',
+    repo: 'https://github.com/Nazar-Didora/edu_db_coursework-IM-21-NazarDidora',
     // Customising the header label
     // Defaults to "GitHub"/"GitLab"/"Bitbucket" depending on `themeConfig.repo`
     repoLabel: 'Github',
@@ -96,7 +96,7 @@ module.exports = {
 
   },
   title: '2. Система управління відкритими даними',
-  description: 'Лабораторні роботи з дисципліни "Організація баз даних"',
+  description: 'Курсова робота з дисципліни "Організація баз даних"',
   configureWebpack: {
     resolve: {
       alias: {
